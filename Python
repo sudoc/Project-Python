@@ -1,0 +1,81 @@
+from tkinter import *
+from tkinter.ttk import *
+import requests, pdfkit
+
+
+def Frame1():
+    F = Tk()
+    F.geometry('350x200')
+    l1 = Label(F, text="Witaj w aplikacji do ułatwiania życia studentom!")
+    l1.grid(column=0, row=0)
+    l2 = Label(F, text="Jest to propotyp, więc proszę o cierpliwość")
+    l2.grid(column=0, row=1)
+    l3 = Label(F, text="Wyświetla w formacie pdf inf ze strony prowadz")
+    l3.grid(column=0, row=2)
+    l4 = Label(F, text="Ver.1.0")
+    l4.grid(column=1, row=3)
+    F.title("Aplikacja")
+    m = Menu(F)
+    ni = Menu(m)
+
+    def Prowadz():
+        Frame2 = Tk()
+        Frame2.title("Wybieranie prowadzącego: ")
+        Frame2.geometry('400x200')
+        l = Label(Frame2, text="Wybierz prowadzącego: ")
+        l.grid(column=0, row=0)
+
+        combo = Combobox(Frame2)
+        combo.grid(column=1, row=0)
+        combo['values'] = ("Dr Zawada", "Dr Kik")
+        combo.current(0)
+        l2 = Label(Frame2, text="(Jak na razie, to działa tylko dr Zawada)")
+        l2.grid(column=1, row=2)
+
+        def c():
+            def sciezka():
+                if combo.get() == "Dr Zawada":
+                    url = 'https://cs.pwr.edu.pl/zawada/kwjp/'
+                    pdfkit.from_url(url, e.get())
+                    print(e.get())
+
+            Frame3 = Tk()
+            Frame3.title("Ścieżka")
+            Frame3.geometry('350x200')
+            l = Label(Frame3, text="Wprowadź ścieżkę oraz nazwę zapisu pliku: ")
+            l.grid(column=1, row=0)
+            l2 = Label(Frame3, text="(w przyszłości spróbuję zrobić coś mniej topornego)")
+            l2.grid(column=1, row=3)
+            e = Entry(Frame3)
+            e.grid(column=1, row=1)
+            b = Button(Frame3, text="Wprowadź", command = sciezka)
+            b.grid(column=1, row=2)
+            Frame3.mainloop()
+
+        b = Button(Frame2, text="Wybierz", command=c)
+        b.grid(column=1, row=1)
+        Frame2.mainloop()
+    def Pomoc():
+        Frame4 = Tk()
+        Frame4.title("Pomoc")
+        l = Label(Frame4, text="Aplikacja do ułatwiania życia studentom(Aużs)")
+        l.grid(column=0, row=0)
+        l2 = Label(Frame4, text="Służy ona do wyszukiwania prowadzących a następnie,")
+        l2.grid(column=0, row=1)
+        l3 = Label(Frame4, text="pobiera zawartość z ich stron i zapisuje do formatu pdf")
+        l3.grid(column=0, row=2)
+        l = Label(Frame4, text="(Tutaj bardziej się rozpiszę)")
+        l.grid(column=0, row=3)
+        Frame4.geometry('350x200')
+        Frame4.mainloop()
+    ni.add_command(label='Lista Prowadzących', command=Prowadz)
+    m.add_cascade(label='Opcje', m=ni)
+    ni2 = Menu(m)
+    ni2.add_command(label='Podstawowa pomoc', command=Pomoc)
+    m.add_cascade(label='Pomoc', m=ni2)
+    F.config(menu=m)
+    F.mainloop()
+
+
+Frame1()
+

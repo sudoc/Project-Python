@@ -1,4 +1,6 @@
 from tkinter import *
+from tkinter import filedialog
+from tkinter.filedialog import asksaveasfilename
 from tkinter.ttk import *
 import requests, pdfkit
 
@@ -32,29 +34,18 @@ def Frame1():
         l2 = Label(Frame2, text="(Jak na razie, to działa tylko dr Zawada)")
         l2.grid(column=1, row=2)
 
-        def c():
-            def sciezka():
-                if combo.get() == "Dr Zawada":
-                    url = 'https://cs.pwr.edu.pl/zawada/kwjp/'
-                    pdfkit.from_url(url, e.get())
-                    print(e.get())
+        def wybieranie():
+            f = filedialog.asksaveasfilename()
+            print(f)
+            if combo.get() == "Dr Zawada":
+                url = 'https://cs.pwr.edu.pl/zawada/kwjp/'
+                pdfkit.from_url(url, f)
+                print(f)
 
-            Frame3 = Tk()
-            Frame3.title("Ścieżka")
-            Frame3.geometry('350x200')
-            l = Label(Frame3, text="Wprowadź ścieżkę oraz nazwę zapisu pliku: ")
-            l.grid(column=1, row=0)
-            l2 = Label(Frame3, text="(w przyszłości spróbuję zrobić coś mniej topornego)")
-            l2.grid(column=1, row=3)
-            e = Entry(Frame3)
-            e.grid(column=1, row=1)
-            b = Button(Frame3, text="Wprowadź", command = sciezka)
-            b.grid(column=1, row=2)
-            Frame3.mainloop()
-
-        b = Button(Frame2, text="Wybierz", command=c)
+        b = Button(Frame2, text="Wybierz", command=wybieranie)
         b.grid(column=1, row=1)
         Frame2.mainloop()
+
     def Pomoc():
         Frame4 = Tk()
         Frame4.title("Pomoc")
@@ -68,6 +59,7 @@ def Frame1():
         l.grid(column=0, row=3)
         Frame4.geometry('350x200')
         Frame4.mainloop()
+
     ni.add_command(label='Lista Prowadzących', command=Prowadz)
     m.add_cascade(label='Opcje', m=ni)
     ni2 = Menu(m)
@@ -78,4 +70,3 @@ def Frame1():
 
 
 Frame1()
-

@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter.filedialog import asksaveasfilename
 from tkinter.ttk import *
-import requests, pdfkit
+import requests, pdfkit, time
 
 
 def Frame1():
@@ -29,18 +29,42 @@ def Frame1():
 
         combo = Combobox(Frame2)
         combo.grid(column=1, row=0)
-        combo['values'] = ("Dr Zawada", "Dr Kik")
+        combo['values'] = ("Dr Zawada", "Dr Gołębiewski")
         combo.current(0)
         l2 = Label(Frame2, text="(Jak na razie, to działa tylko dr Zawada)")
         l2.grid(column=1, row=2)
+        l3 = Label(Frame2, text = "")
+        l3.grid(column=1,row=3)
 
         def wybieranie():
-            f = filedialog.asksaveasfilename()
+            f = filedialog.asksaveasfilename(filetypes=(("PDF", "*.pdf"), ("Wszystkie pliki", "*.*")))
             print(f)
+            bar = Progressbar(Frame2, orient=HORIZONTAL,length=100,mode='determinate')
+            bar.grid(column=1,row=4)
+            bar['value'] = 0
             if combo.get() == "Dr Zawada":
+                l3.config(text = "Postęp pobierania")
                 url = 'https://cs.pwr.edu.pl/zawada/kwjp/'
+                bar['value'] = 20
+                Frame2.update_idletasks()
+                time.sleep(1)
+                bar['value'] = 40
+                Frame2.update_idletasks()
+                time.sleep(1)
+                bar['value'] = 60
+                Frame2.update_idletasks()
+                time.sleep(1)
+                bar['value'] = 80
+                Frame2.update_idletasks()
+                time.sleep(1)
+                bar['value'] = 100
                 pdfkit.from_url(url, f)
-                print(f)
+                l4 = Label(Frame2, text = "Pobrano!")
+                l4.grid(column=1,row=5)
+
+            elif combo.get() == "Dr Gołębiewski":
+                url = 'https://cs.pwr.edu.pl/golebiewski/#teaching/1920/aisd.php'
+                pdfkit.from_url(url,f)
 
         b = Button(Frame2, text="Wybierz", command=wybieranie)
         b.grid(column=1, row=1)

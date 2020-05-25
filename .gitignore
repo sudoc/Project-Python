@@ -6,3 +6,6 @@
 /.vs
 /Project-Python.sln
 /Project-Python.pyproj
+/build/main
+/__pycache__
+/dist/main

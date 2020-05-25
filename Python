@@ -1,8 +1,10 @@
 from tkinter import *
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from tkinter.filedialog import asksaveasfilename
 from tkinter.ttk import *
-import requests, pdfkit, time
+from tokenize import String
+
+import requests, pdfkit, time, mysql.connector
 
 
 def Frame1():
@@ -21,51 +23,76 @@ def Frame1():
     ni = Menu(m)
 
     def Prowadz():
+        lista = []
+        baza = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            passwd="Jajeczko8",
+            database="wyk"
+        )
+        c = baza.cursor()
+        sql = "Select Nazwa from dane"
+        c.execute(sql)
         Frame2 = Tk()
         Frame2.title("Wybieranie prowadzącego: ")
-        Frame2.geometry('400x200')
+        Frame2.geometry('400x200+500+300')
         l = Label(Frame2, text="Wybierz prowadzącego: ")
         l.grid(column=0, row=0)
-
         combo = Combobox(Frame2)
+        for i in c.fetchall():
+            lista.append(i)
         combo.grid(column=1, row=0)
-        combo['values'] = ("Dr Zawada", "Dr Gołębiewski")
+        combo['values'] = lista
         combo.current(0)
-        l2 = Label(Frame2, text="(Jak na razie, to działa tylko dr Zawada)")
-        l2.grid(column=1, row=2)
-        l3 = Label(Frame2, text = "")
-        l3.grid(column=1,row=3)
-
+        l3 = Label(Frame2, text="")
+        l3.grid(column=1, row=3)
         def wybieranie():
-            f = filedialog.asksaveasfilename(filetypes=(("PDF", "*.pdf"), ("Wszystkie pliki", "*.*")))
-            print(f)
-            bar = Progressbar(Frame2, orient=HORIZONTAL,length=100,mode='determinate')
-            bar.grid(column=1,row=4)
+            baza = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                passwd="Jajeczko8",
+                database="wyk"
+            )
+            f = filedialog.asksaveasfilename(filetypes=(("pdf", "*.pdf"),
+                                                        ("Wszystkie pliki", "*.*")))
+            bar = Progressbar(Frame2, orient=HORIZONTAL, length=100, mode='determinate')
+            bar.grid(column=1, row=4)
             bar['value'] = 0
-            if combo.get() == "Dr Zawada":
-                l3.config(text = "Postęp pobierania")
-                url = 'https://cs.pwr.edu.pl/zawada/kwjp/'
-                bar['value'] = 20
-                Frame2.update_idletasks()
-                time.sleep(1)
-                bar['value'] = 40
-                Frame2.update_idletasks()
-                time.sleep(1)
-                bar['value'] = 60
-                Frame2.update_idletasks()
-                time.sleep(1)
-                bar['value'] = 80
-                Frame2.update_idletasks()
-                time.sleep(1)
-                bar['value'] = 100
-                pdfkit.from_url(url, f)
-                l4 = Label(Frame2, text = "Pobrano!")
-                l4.grid(column=1,row=5)
-
-            elif combo.get() == "Dr Gołębiewski":
-                url = 'https://cs.pwr.edu.pl/golebiewski/#teaching/1920/aisd.php'
-                pdfkit.from_url(url,f)
-
+            l4 = Label(Frame2, text="")
+            l4.grid(column=1, row=6)
+            l5 = Label(Frame2, text="")
+            l5.grid(column=1,row=5)
+            sql2 = "Select Strona from dane where Nazwa = %s"
+            var2 = (combo.get(),)
+            c2 = baza.cursor()
+            c2.execute(sql2, var2)
+            l3.config(text="Postęp pobierania")
+            url = str(c2.fetchall()).replace("(","").replace("'","").replace(",","")\
+                .replace("[","").replace("]","").replace(")","")
+            bar['value'] = 20
+            l5.config(text='20%')
+            Frame2.update_idletasks()
+            time.sleep(1)
+            bar['value'] = 40
+            l5.config(text='40%')
+            Frame2.update_idletasks()
+            time.sleep(1)
+            bar['value'] = 60
+            l5.config(text='60%')
+            Frame2.update_idletasks()
+            time.sleep(1)
+            bar['value'] = 80
+            l5.config(text='80%')
+            Frame2.update_idletasks()
+            time.sleep(1)
+            bar['value'] = 100
+            l5.config(text='100%')
+            pdfkit.from_url(url, f)
+            l4.config(text="Pobrano!")
+            l4.after(3000,l4.destroy)
+            #l5.after(3000,l5.destroy)
+            #l3.after(3000,l3.destroy)
+            #bar.after(3000,bar.destroy)
         b = Button(Frame2, text="Wybierz", command=wybieranie)
         b.grid(column=1, row=1)
         Frame2.mainloop()
@@ -79,12 +106,133 @@ def Frame1():
         l2.grid(column=0, row=1)
         l3 = Label(Frame4, text="pobiera zawartość z ich stron i zapisuje do formatu pdf")
         l3.grid(column=0, row=2)
-        l = Label(Frame4, text="(Tutaj bardziej się rozpiszę)")
+        l = Label(Frame4, text="(Tutaj bardziej się rozpiszę)")
         l.grid(column=0, row=3)
-        Frame4.geometry('350x200')
+        Frame4.geometry('350x200+500+300')
         Frame4.mainloop()
 
+    def Dod():
+        def baza():
+            baza = mysql.connector.connect(
+
+                host="localhost",
+                user="root",
+                passwd="Jajeczko8",
+                database="wyk"
+
+            )
+            c = baza.cursor()
+            var = "Insert into dane (Nazwa,Strona) values (%s,%s)"
+            sql = (e.get(), e2.get())
+            l = Label(f4, text="")
+            l.grid(column=2, row=0)
+            l2 = Label(f4, text="")
+            l2.grid(column=2, row=1)
+            l3 = Label(f4, text="")
+            l3.grid(column=1, row=3)
+            l4 = Label(f4, text="")
+            l4.grid(column=1, row=3)
+            if e.get() is "":
+                l.config(text="Nazwa nie może być pusta!")
+                l.after(3000, l.destroy)
+            elif e2.get() is "":
+                l2.config(text="Strona nie może być pusta!")
+                l2.after(3000, l2.destroy)
+            else:
+                var2 = "Select Nazwa,Strona from dane where Nazwa = %s AND Strona = %s"
+                sql2 = (e.get(), e2.get())
+                c.execute(var2, sql2)
+                result = c.fetchall()
+                i = 0
+                for x in result:
+                    i = i + 1
+                print(i)
+                if i is 0:
+                    c.execute(var, sql)
+                    baza.commit()
+                    l3.config(text="Wpisano do bazy!")
+                    l3.after(3000, l3.destroy)
+                else:
+                    l4.config(text="Te dane są już wpisane!")
+                    l4.after(3000, l4.destroy)
+            print(e.get())
+
+        f4 = Tk()
+        f4.title("Dodawanie Prowadzącego")
+        f4.geometry('450x200+500+300')
+        l = Label(f4, text="Wpisz tytul i nazwisko: ")
+        l.grid(column=0, row=0)
+        e = Entry(f4)
+        e.grid(column=1, row=0)
+        l2 = Label(f4, text="Wpisz pełny adres strony: ")
+        l2.grid(column=0, row=1)
+        e2 = Entry(f4)
+        e2.grid(column=1, row=1)
+        b = Button(f4, text="Dodaj", command=baza)
+        b.grid(column=1, row=2)
+        f4.mainloop()
+
+    def usun():
+        lista = []
+        baza = mysql.connector.connect(
+
+            host="localhost",
+            user="root",
+            passwd="Jajeczko8",
+            database="wyk"
+
+        )
+        c = baza.cursor()
+        sql = "Select Nazwa from dane"
+        c.execute(sql)
+        for i in c.fetchall():
+            lista.append(i)
+        f5 = Tk()
+        f5.geometry("450x250+500+300")
+        f5.title("Usuwanie Nazwy")
+        la1 = Label(f5, text="Wybierz prowadzącego")
+        la1.grid(column=0, row=0)
+        box = Combobox(f5)
+        box.grid(column=1,row=0)
+        box['values'] = lista
+        box.current(0)
+
+        def baza():
+            baza = mysql.connector.connect(
+
+                host="localhost",
+                user="root",
+                passwd="Jajeczko8",
+                database="wyk"
+
+            )
+            c = baza.cursor()
+            l = Label(f5,text="")
+            l.grid(column=1,row=2)
+            sql2 = "Select * from dane where Nazwa = %s"
+            var2 = (box.get(), )
+            c.execute(sql2,var2)
+            i = 0
+            for x in c.fetchall():
+                i = i+1
+            if i is 0:
+                l.config(text="Nie ma takiego rekordu")
+                l.after(3000,l.destroy)
+            else:
+                sql3 = "Delete from dane where Nazwa = %s"
+                var3 = (box.get(), )
+                c.execute(sql3, var3)
+                baza.commit()
+                l.config(text="Usunięto poprawnie!")
+                l.after(3000, l.destroy)
+
+        b = Button(f5,text="Usun", command = baza)
+        b.grid(column=1,row=1)
+        f5.mainloop()
+
     ni.add_command(label='Lista Prowadzących', command=Prowadz)
+    ni.add_command(label="Dodaj prowadz", command=Dod)
+    ni.add_command(label="Usun prowadz", command=usun)
     m.add_cascade(label='Opcje', m=ni)
     ni2 = Menu(m)
     ni2.add_command(label='Podstawowa pomoc', command=Pomoc)

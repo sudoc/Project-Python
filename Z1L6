@@ -1,5 +1,7 @@
 import numpy as np
 
+# Dlaczego w danych wejściowych z przykładu z wykładu mamy ostatnią kolumnę z samymi jedynkami?
+# Ponieważ, posiadamy trzy wejścia, więc muszą być trzy kolumny, a ta trzecia, to jest BIAS.
 
 def Sigma():
     def sigmoid(x):

@@ -1,8 +1,9 @@
 from tkinter import *
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from tkinter.filedialog import asksaveasfilename
 from tkinter.ttk import *
-import requests, pdfkit, time, threading
+from tokenize import String
+import requests, pdfkit, time, threading, mysql.connector
 
 
 def Frame1():
@@ -17,7 +18,7 @@ def Frame1():
     l3.grid(column=0, row=2)
     l4 = Label(F, text="Aby rozpocząć, wybierz prowadzącego z menu Opcje.")
     l4.grid(column=0, row=3)
-    l5 = Label(F, text="Ver.1.1")
+    l5 = Label(F, text="Ver.1.2")
     l5.grid(column=0, row=4)
     F.title("AUŻS")
     m = Menu(F)
@@ -25,16 +26,28 @@ def Frame1():
 
 
     def Prowadz():
+        lista = []
+        baza = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            passwd="",
+            database="wyk"
+        )
+        c = baza.cursor()
+        sql = "Select Nazwa from dane"
+        c.execute(sql)
         Frame2 = Tk()
         Frame2.title("Wybieranie prowadzącego: ")
-        Frame2.geometry('450x200')
+        Frame2.geometry('450x200+500+300')
         Frame2.resizable(0, 0)
         l1 = Label(Frame2, text="Wybierz prowadzącego: ")
         l1.grid(column=0, row=0)
 
         combo = Combobox(Frame2)
+        for i in c.fetchall():
+            lista.append(i)
         combo.grid(column=1, row=0)
-        combo['values'] = ("Dr Zawada", "Dr Gołębiewski")
+        combo['values'] = lista
         combo.current(0)
         l2 = Label(Frame2, text="Wybierz prowadzacego lub wpisz URL")
         l2.grid(column=1, row=2)
@@ -44,16 +57,12 @@ def Frame1():
         l4.grid(column=1,row=5)
 
 
-        def worker_start(fdir):
+        def worker_start(fdir, url):
             l4.config(text = "")
             l3.config(text = "Trwa pobieranie, czekaj...")
             bar.grid(column=1,row=4)
 
-            if combo.get() == "Dr Zawada":
-                url = 'https://cs.pwr.edu.pl/zawada/kwjp/'
-            elif combo.get() == "Dr Gołębiewski":
-                url = 'https://cs.pwr.edu.pl/golebiewski/#teaching/1920/aisd.php'
-            else:
+            if url == "":
                 url = combo.get()
 
             bar.start()
@@ -65,11 +74,25 @@ def Frame1():
 
 
         def wybieranie():
-            fdir = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=(("PDF", "*.pdf"), ("Wszystkie pliki", "*.*")))
-            print(fdir)
+            fdir = filedialog.asksaveasfilename(defaultextension=".pdf",
+                                                filetypes=(("PDF", "*.pdf"),
+                                                           ("Wszystkie pliki", "*.*")))
+
+            baza = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                passwd="",
+                database="wyk"
+            )
+            sql2 = "Select Strona from dane where Nazwa = %s"
+            var2 = (combo.get(),)
+            c2 = baza.cursor()
+            c2.execute(sql2, var2)
+            url = str(c2.fetchall()).replace("(","").replace("'","").replace(",","")\
+                .replace("[","").replace("]","").replace(")","")
 
             btn['state']='disabled'
-            threading.Thread(target=worker_start, args=(fdir,)).start()
+            threading.Thread(target=worker_start, args=(fdir, url,)).start()
 
         bar = Progressbar(Frame2, orient=HORIZONTAL, length=100, mode='determinate')
         btn = Button(Frame2, text="Wybierz", command=wybieranie)
@@ -91,8 +114,128 @@ def Frame1():
         l.grid(column=0, row=3)
         Frame4.mainloop()
 
+    def Dod():
+        def baza():
+            baza = mysql.connector.connect(
+
+                host="localhost",
+                user="root",
+                passwd="",
+                database="wyk"
+
+            )
+            c = baza.cursor()
+            var = "Insert into dane (Nazwa,Strona) values (%s,%s)"
+            sql = (e.get(), e2.get())
+            l = Label(f4, text="")
+            l.grid(column=2, row=0)
+            l2 = Label(f4, text="")
+            l2.grid(column=2, row=1)
+            l3 = Label(f4, text="")
+            l3.grid(column=1, row=3)
+            l4 = Label(f4, text="")
+            l4.grid(column=1, row=3)
+            if e.get() is "":
+                l.config(text="Nazwa nie może być pusta!")
+                l.after(3000, l.destroy)
+            elif e2.get() is "":
+                l2.config(text="Strona nie może być pusta!")
+                l2.after(3000, l2.destroy)
+            else:
+                var2 = "Select Nazwa,Strona from dane where Nazwa = %s AND Strona = %s"
+                sql2 = (e.get(), e2.get())
+                c.execute(var2, sql2)
+                result = c.fetchall()
+                i = 0
+                for x in result:
+                    i = i + 1
+                print(i)
+                if i is 0:
+                    c.execute(var, sql)
+                    baza.commit()
+                    l3.config(text="Wpisano do bazy!")
+                    l3.after(3000, l3.destroy)
+                else:
+                    l4.config(text="Te dane są już wpisane!")
+                    l4.after(3000, l4.destroy)
+            print(e.get())
+
+        f4 = Tk()
+        f4.title("Dodawanie Prowadzącego")
+        f4.geometry('450x200+500+300')
+        l = Label(f4, text="Wpisz tytuł i nazwisko: ")
+        l.grid(column=0, row=0)
+        e = Entry(f4)
+        e.grid(column=1, row=0)
+        l2 = Label(f4, text="Wpisz pełny adres strony: ")
+        l2.grid(column=0, row=1)
+        e2 = Entry(f4)
+        e2.grid(column=1, row=1)
+        b = Button(f4, text="Dodaj", command=baza)
+        b.grid(column=1, row=2)
+        f4.mainloop()
+
+    def usun():
+        lista = []
+        baza = mysql.connector.connect(
+
+            host="localhost",
+            user="root",
+            passwd="",
+            database="wyk"
+
+        )
+        c = baza.cursor()
+        sql = "Select Nazwa from dane"
+        c.execute(sql)
+        for i in c.fetchall():
+            lista.append(i)
+        f5 = Tk()
+        f5.geometry("450x250+500+300")
+        f5.title("Usuwanie Nazwy")
+        la1 = Label(f5, text="Wybierz prowadzącego")
+        la1.grid(column=0, row=0)
+        box = Combobox(f5)
+        box.grid(column=1,row=0)
+        box['values'] = lista
+        box.current(0)
+
+        def baza():
+            baza = mysql.connector.connect(
+
+                host="localhost",
+                user="root",
+                passwd="",
+                database="wyk"
+
+            )
+            c = baza.cursor()
+            l = Label(f5,text="")
+            l.grid(column=1,row=2)
+            sql2 = "Select * from dane where Nazwa = %s"
+            var2 = (box.get(), )
+            c.execute(sql2,var2)
+            i = 0
+            for x in c.fetchall():
+                i = i+1
+            if i is 0:
+                l.config(text="Nie ma takiego rekordu")
+                l.after(3000,l.destroy)
+            else:
+                sql3 = "Delete from dane where Nazwa = %s"
+                var3 = (box.get(), )
+                c.execute(sql3, var3)
+                baza.commit()
+                l.config(text="Usunięto poprawnie!")
+                l.after(3000, l.destroy)
+
+        b = Button(f5,text="Usun", command = baza)
+        b.grid(column=1,row=1)
+        f5.mainloop()
 
     ni.add_command(label='Lista Prowadzących', command=Prowadz)
+    ni.add_command(label="Dodaj prowadzącego", command=Dod)
+    ni.add_command(label="Usuń prowadzącego", command=usun)
     m.add_cascade(label='Opcje', m=ni)
     ni2 = Menu(m)
     ni2.add_command(label='Podstawowa pomoc', command=Pomoc)

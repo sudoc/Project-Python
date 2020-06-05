@@ -4,7 +4,70 @@ from tkinter.filedialog import asksaveasfilename
 from tkinter.ttk import *
 from tokenize import String
 import requests, pdfkit, time, threading, mysql.connector
+from mysql.connector import Error
 
+
+def db_connect():
+    """Function returns MySQL connector."""
+    return mysql.connector.connect(
+            host="localhost",
+            user="root",
+            passwd="",
+            database="wyk"
+            )
+
+
+def db_connect_and_fetch(query, *vars):
+    """
+    Function fetch data from DB.
+
+    Function connects do the DB, executes SQL query,
+    fetch output of given query and return this output.
+    """
+    result = ""
+    try:
+        conn = db_connect()
+        if conn.is_connected():
+            cursor = conn.cursor()
+            if vars:
+                for var in vars:
+                    cursor.execute(query, var)
+            else:
+                cursor.execute(query)
+            result = cursor.fetchall()
+    except Error as e:
+        print ("Database query failed!", e)
+    finally:
+        if(conn.is_connected()):
+            cursor.close()
+            conn.close()
+    return result
+
+
+def db_connect_and_exec(query, *vars):
+    """
+    Function executes query on DB.
+
+    Function connects do the DB, executes SQL query
+    (function does not provide output).
+    """
+    try:
+        conn = db_connect()
+        if conn.is_connected():
+            cursor = conn.cursor()
+            if vars:
+                for var in vars:
+                    cursor.execute(query, var)
+            else:
+                cursor.execute(query)
+            conn.commit()
+    except Error as e:
+        print ("Database query failed!", e)
+    finally:
+        if(conn.is_connected()):
+            cursor.close()
+            conn.close()
+ 
 
 def Frame1():
     F = Tk()
@@ -26,16 +89,13 @@ def Frame1():
 
 
     def Prowadz():
+        # fetch lecturers from db
         lista = []
-        baza = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            passwd="",
-            database="wyk"
-        )
-        c = baza.cursor()
         sql = "Select Nazwa from dane"
-        c.execute(sql)
+        sql_result = db_connect_and_fetch(sql)
+        for i in sql_result:
+            lista.append(i)
+
         Frame2 = Tk()
         Frame2.title("Wybieranie prowadzącego: ")
         Frame2.geometry('450x200+500+300')
@@ -44,8 +104,6 @@ def Frame1():
         l1.grid(column=0, row=0)
 
         combo = Combobox(Frame2)
-        for i in c.fetchall():
-            lista.append(i)
         combo.grid(column=1, row=0)
         combo['values'] = lista
         combo.current(0)
@@ -78,19 +136,10 @@ def Frame1():
                                                 filetypes=(("PDF", "*.pdf"),
                                                            ("Wszystkie pliki", "*.*")))
 
-            baza = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                passwd="",
-                database="wyk"
-            )
             sql2 = "Select Strona from dane where Nazwa = %s"
             var2 = (combo.get(),)
-            c2 = baza.cursor()
-            c2.execute(sql2, var2)
-            url = str(c2.fetchall()).replace("(","").replace("'","").replace(",","")\
-                .replace("[","").replace("]","").replace(")","")
-
+            sql2_result = db_connect_and_fetch(sql2, var2)
+            url = sql2_result[0][0]
             btn['state']='disabled'
             threading.Thread(target=worker_start, args=(fdir, url,)).start()
 
@@ -116,17 +165,8 @@ def Frame1():
 
     def Dod():
         def baza():
-            baza = mysql.connector.connect(
-
-                host="localhost",
-                user="root",
-                passwd="",
-                database="wyk"
-
-            )
-            c = baza.cursor()
-            var = "Insert into dane (Nazwa,Strona) values (%s,%s)"
-            sql = (e.get(), e2.get())
+            sql = "Insert into dane (Nazwa,Strona) values (%s,%s)"
+            var = (e.get(), e2.get())
             l = Label(f4, text="")
             l.grid(column=2, row=0)
             l2 = Label(f4, text="")
@@ -142,17 +182,15 @@ def Frame1():
                 l2.config(text="Strona nie może być pusta!")
                 l2.after(3000, l2.destroy)
             else:
-                var2 = "Select Nazwa,Strona from dane where Nazwa = %s AND Strona = %s"
-                sql2 = (e.get(), e2.get())
-                c.execute(var2, sql2)
-                result = c.fetchall()
+                sql2 = "Select Nazwa,Strona from dane where Nazwa = %s AND Strona = %s"
+                var2 = (e.get(), e2.get())
+                sql2_result = db_connect_and_fetch(sql2, var2)
                 i = 0
-                for x in result:
+                for x in sql2_result:
                     i = i + 1
                 print(i)
                 if i is 0:
-                    c.execute(var, sql)
-                    baza.commit()
+                    db_connect_and_exec(sql, var)
                     l3.config(text="Wpisano do bazy!")
                     l3.after(3000, l3.destroy)
                 else:
@@ -176,20 +214,13 @@ def Frame1():
         f4.mainloop()
 
     def usun():
+        # fetch lecturers from db
         lista = []
-        baza = mysql.connector.connect(
-
-            host="localhost",
-            user="root",
-            passwd="",
-            database="wyk"
-
-        )
-        c = baza.cursor()
         sql = "Select Nazwa from dane"
-        c.execute(sql)
-        for i in c.fetchall():
+        sql_result = db_connect_and_fetch(sql)
+        for i in sql_result:
             lista.append(i)
+
         f5 = Tk()
         f5.geometry("450x250+500+300")
         f5.title("Usuwanie Nazwy")
@@ -201,31 +232,21 @@ def Frame1():
         box.current(0)
 
         def baza():
-            baza = mysql.connector.connect(
-
-                host="localhost",
-                user="root",
-                passwd="",
-                database="wyk"
-
-            )
-            c = baza.cursor()
             l = Label(f5,text="")
             l.grid(column=1,row=2)
             sql2 = "Select * from dane where Nazwa = %s"
             var2 = (box.get(), )
-            c.execute(sql2,var2)
+            sql2_result = db_connect_and_fetch(sql2,var2)
             i = 0
-            for x in c.fetchall():
-                i = i+1
+            for x in sql2_result:
+                i = i + 1
             if i is 0:
                 l.config(text="Nie ma takiego rekordu")
                 l.after(3000,l.destroy)
             else:
                 sql3 = "Delete from dane where Nazwa = %s"
                 var3 = (box.get(), )
-                c.execute(sql3, var3)
-                baza.commit()
+                db_connect_and_exec(sql3, var3)
                 l.config(text="Usunięto poprawnie!")
                 l.after(3000, l.destroy)
 

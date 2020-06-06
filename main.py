@@ -5,6 +5,7 @@ from tkinter.ttk import *
 from tokenize import String
 import requests, pdfkit, time, threading, mysql.connector
 from mysql.connector import Error
+from mysql.connector.locales.eng import client_error
 
 
 def db_connect():
